@@ -1,0 +1,16 @@
+# ¡Hazlo! — configuración de Netlify
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+# El trabajador de servicio siempre se revisa para que lleguen las versiones nuevas.
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[build.environment]
+  NODE_VERSION = "22"

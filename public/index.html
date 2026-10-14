@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>¡Hazlo!</title>
+<meta name="description" content="Tus tareas del día, tachables, con colores y gestos.">
+<meta name="theme-color" content="#D9FCF3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="¡Hazlo!">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preload" href="fonts/fredoka-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body><svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11.5V10a5 5 0 0 1 5-5h10M16 2l3 3-3 3M20 12.5V14a5 5 0 0 1-5 5H5M8 22l-3-3 3-3"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5.5 12.5l4.2 4.2L18.5 8"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-smile" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14a4.2 4.2 0 0 0 7 0M9.2 9.6h.01M14.8 9.6h.01"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 2.5h6a1 1 0 0 1 .8 1.6L14.5 6v4.2l2.9 2.6a.8.8 0 0 1-.5 1.4H13v6.3L12 22l-1-1.5v-6.3H7.1a.8.8 0 0 1-.5-1.4l2.9-2.6V6L8.2 4.1A1 1 0 0 1 9 2.5z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4L6 16.5zM10 20.6a2.2 2.2 0 0 0 4 0"/></symbol>
+  <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.8M4.5 5.5l3-2.5M19.5 5.5l-3-2.5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></symbol>
+</svg>
+
+<header class="band">
+  <div class="wrap band-in">
+    <div class="brand">
+      <svg class="logo" viewBox="0 0 56 56" aria-hidden="true">
+        <path class="logo-blob" d="M28 6c12.4 0 22 9 22 21.2C50 39.6 40.6 50 27.6 50 15.2 50 6 40.8 6 28.4 6 16 15.6 6 28 6z"/>
+        <path class="logo-under" d="M17 29.5l8 8L47 13"/>
+        <path class="logo-check" d="M17 29.5l8 8L47 13"/>
+      </svg>
+      <div>
+        <h1>¡Hazlo!</h1>
+        <button class="hola" id="hola" type="button" aria-label="Cambiar tu nombre">Tareas diarias</button>
+      </div>
+    </div>
+    <button class="bell" id="bell" type="button" aria-label="Alertas" aria-expanded="false" aria-controls="alertas">
+      <svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg>
+    </button>
+    <div class="ring" id="ring" role="img" aria-label="Cargando avance">
+      <svg viewBox="0 0 48 48" aria-hidden="true">
+        <circle class="ring-track" cx="24" cy="24" r="21"/>
+        <circle class="ring-bar" id="ring-bar" cx="24" cy="24" r="21" transform="rotate(-90 24 24)"/>
+      </svg>
+      <span class="ring-num" id="ring-num">–</span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap main">
+  <section class="nombre" id="nombre" hidden aria-labelledby="nombre-t">
+    <h2 id="nombre-t">¡Bienvenido! 👋</h2>
+    <p>¿Cómo te llamas? Así la app te saluda a ti.</p>
+    <form class="nb-form" id="nombre-form" autocomplete="off">
+      <input class="nb-input" id="nombre-input" type="text" maxlength="24" placeholder="Tu nombre" aria-label="Tu nombre" enterkeyhint="done" autocapitalize="words">
+      <button class="nb-ok" type="submit">Listo</button>
+    </form>
+    <button class="nb-skip" id="nombre-saltar" type="button">Ahora no</button>
+  </section>
+  <section class="alerts" id="alertas" hidden aria-labelledby="alertas-t">
+    <div class="al-head">
+      <h2 id="alertas-t"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg>Alertas</h2>
+      <button class="al-close" id="alertas-cerrar" type="button" aria-label="Cerrar alertas"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <p class="al-text">A la hora de cada tarea te aviso con un mensaje, un sonido y vibración mientras la app esté abierta.</p>
+    <div class="al-row">
+      <p class="al-state" id="al-estado"></p>
+      <button class="al-btn" id="al-permitir" type="button" hidden>Permitir notificaciones</button>
+    </div>
+    <h3>Próximos avisos</h3>
+    <ul class="al-list" id="al-lista"></ul>
+    <p class="al-tip" id="al-tip"><b>¿Con la app cerrada?</b> Abre una tarea con hora y toca «Alarma en el calendario». Tu teléfono te avisará aunque la app esté cerrada.</p>
+  </section>
+
+  <section class="today" aria-label="Hoy">
+    <h2><svg class="ic" aria-hidden="true"><use href="#i-cal"/></svg><span id="fecha">Hoy</span></h2>
+    <div class="today-row">
+      <p class="sum" id="sum">Cargando tu lista…</p>
+      <button class="add" id="add" type="button" disabled>
+        <span class="add-plus"><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></span>Nueva tarea
+      </button>
+    </div>
+  </section>
+
+  <div class="tabs" role="group" aria-label="Filtrar tareas">
+    <button class="tab" type="button" data-filter="todas" aria-pressed="true">Todas <span class="n" id="n-todas">0</span></button>
+    <button class="tab" type="button" data-filter="pendientes" aria-pressed="false">Pendientes <span class="n" id="n-pendientes">0</span></button>
+    <button class="tab" type="button" data-filter="tachadas" aria-pressed="false">Tachadas <span class="n" id="n-tachadas">0</span></button>
+  </div>
+
+  <div class="banner" id="banner" hidden>
+    <p>Son tareas de ejemplo para que veas cómo se tachan.</p>
+    <button type="button" id="borrar-ej">Borrar ejemplos</button>
+  </div>
+
+  <div class="list" id="list"></div>
+
+  <div class="empty" id="empty">
+    <svg class="empty-art" viewBox="0 0 220 124" aria-hidden="true">
+      <rect class="ea-c1" x="14" y="14" width="190" height="44" rx="14"/>
+      <rect class="ea-b1" x="27" y="26" width="20" height="20" rx="6"/>
+      <path class="ea-k1" d="M31.5 36.5l4 4 7.5-8"/>
+      <rect class="ea-t1" x="58" y="32" width="118" height="8" rx="4"/>
+      <path class="ea-s1" d="M54 37.5c22-2.2 48 1.6 70-.4s38 1.2 56-.8"/>
+      <rect class="ea-c2" x="28" y="70" width="180" height="44" rx="14"/>
+      <rect class="ea-b2" x="41" y="82" width="20" height="20" rx="6"/>
+      <rect class="ea-t2" x="72" y="88" width="96" height="8" rx="4"/>
+    </svg>
+    <p class="empty-title" id="empty-title">Cargando tu lista…</p>
+    <p class="empty-sub" id="empty-sub">Aquí aparecerán tus tareas. Toca «Nueva tarea» para anotar la primera.</p>
+  </div>
+
+  <footer class="foot">
+    <button class="clear" id="limpiar" type="button" hidden><svg class="ic" aria-hidden="true"><use href="#i-spark"/></svg><span>Limpiar tachadas (<span id="limpiar-n">0</span>)</span></button>
+    <p class="note" id="nota-gestos" hidden>Mantén presionada una tarea para moverla. Deslízala a la derecha para fijarla arriba, o a la izquierda para borrarla si ya está tachada.</p>
+    <p class="note" id="nota-diaria" hidden>Las tareas diarias vuelven a quedar pendientes al día siguiente.</p>
+    <p class="note" id="nota-modo" hidden></p>
+  </footer>
+</main>
+
+<button class="fab" id="fab" type="button" aria-label="Nueva tarea" hidden><svg class="ic" aria-hidden="true"><use href="#i-plus"/></svg></button>
+<div class="aviso" id="aviso" role="alert" hidden>
+  <div class="av-icon" aria-hidden="true"><svg class="ic"><use href="#i-alarm"/></svg></div>
+  <div class="av-body"><p class="av-title" id="av-titulo"></p><p class="av-text" id="av-texto"></p></div>
+  <div class="av-actions" id="av-acciones"></div>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden><span id="toast-msg"></span><button type="button" class="toast-act" id="toast-act" hidden></button></div>
+<script src="app.js"></script>
+</body>
+</html>

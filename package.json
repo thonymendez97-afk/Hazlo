@@ -1,0 +1,10 @@
+{
+  "name": "hazlo",
+  "private": true,
+  "type": "module",
+  "description": "¡Hazlo! Tareas diarias — app instalable con avisos push",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.4",
+    "web-push": "^3.6.7"
+  }
+}

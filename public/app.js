@@ -1454,6 +1454,9 @@
     else { st.textContent = 'Notificaciones del teléfono: falta tu permiso.'; pb.hidden = false; }
 
     $('#al-tip').hidden = PUSH.on;
+    $('#al-texto').textContent = PUSH.on
+      ? 'A la hora de cada tarea te llega una notificación, aunque la app esté cerrada o el celular bloqueado.'
+      : 'A la hora de cada tarea te aviso con un mensaje, un sonido y vibración mientras la app esté abierta.';
     const ul = $('#al-lista');
     ul.textContent = '';
     if (!items.length) {

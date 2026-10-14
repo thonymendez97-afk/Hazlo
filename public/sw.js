@@ -1,7 +1,7 @@
 /* ¡Hazlo! — trabajador de servicio.
    Guarda la app en el teléfono para que abra sin internet y abre la app al tocar una notificación.
    Cuando publiques cambios, sube el número de VERSION para que todos reciban la versión nueva. */
-const VERSION = 'hazlo-v3';
+const VERSION = 'hazlo-v4';
 const ASSETS = [
   './', './index.html', './styles.css', './app.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png',

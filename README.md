@@ -57,6 +57,17 @@ Para instalarla en un celular, la app tiene que estar en una dirección web segu
 - **Qué recibe el servidor:** solo el nombre, el emoji y la hora de las tareas que tienen hora, y la dirección de notificaciones del teléfono. Nada más.
 - **Alarma en el calendario:** sigue disponible en cada tarea con hora, por si la publicaste sin servidor.
 
+## Personalizar
+
+Toca el saludo de arriba («¡Hola, …!») o «Personalizar la app» al final de la lista:
+
+- **Tu nombre.**
+- **Color con mezcladora RGB** para el encabezado, los botones y el fondo, o con los colores listos. El encabezado y el fondo usan un tono suave del color elegido para que todo se lea bien; si el botón queda muy claro, su texto se pone oscuro solo.
+- **Bordes:** de rectos a muy redondeados (0 a 28 px).
+- **Tipo de letra:** Redondeada (la original), Suave, Clásica o Máquina.
+
+Todo se guarda en el teléfono de cada persona y se aplica antes de que la app se pinte. «Restablecer» vuelve al diseño original, con opción de deshacer.
+
 ## 4. Actualizar la app
 
 1. Sube los cambios a GitHub: Netlify publica solo en un minuto.

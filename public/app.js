@@ -1415,6 +1415,7 @@
   function togglePanel(open) {
     const p = $('#alertas'), b = $('#bell');
     const show = open === undefined ? p.hidden : open;
+    if (show) closePerso();
     p.hidden = !show;
     b.setAttribute('aria-expanded', String(show));
     if (show) { renderAlertsPanel(); p.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' }); }
@@ -1593,7 +1594,7 @@
     const n = (lsGet(LS_NAME) || '').trim();
     holaBtn.textContent = n ? '¡Hola, ' + n.split(' ')[0] + '! 👋' : 'Tareas diarias';
     holaBtn.classList.toggle('named', !!n);
-    holaBtn.setAttribute('aria-label', n ? 'Hola, ' + n + '. Cambiar tu nombre' : 'Poner tu nombre');
+    holaBtn.setAttribute('aria-label', n ? 'Hola, ' + n + '. Personalizar la app' : 'Personalizar la app');
   }
   function openName(focus) {
     nameInput.value = lsGet(LS_NAME) || '';
@@ -1609,12 +1610,226 @@
     nameInput.blur();
     closeName();
     showName();
-    if (n) toast('¡Listo, ' + n + '! Toca tu saludo si quieres cambiarlo.');
+    if (n) toast('¡Listo, ' + n + '! Toca tu saludo para personalizar la app 🎨');
   });
   document.getElementById('nombre-saltar').addEventListener('click', closeName);
-  holaBtn.addEventListener('click', () => { if (nameBox.hidden) openName(true); else closeName(); });
   showName();
   if (!lsGet(LS_NAME) && !lsGet(LS_NAME_ASKED)) openName(false);
+
+  /* ---------- Personalizar: colores, bordes y letra ---------- */
+  // Cada persona ajusta su propia app y se guarda solo en su teléfono. El <head> del index.html aplica
+  // lo guardado antes de pintar, así al abrir no se ven un instante los colores originales.
+  const LS_THEME = 'hazlo.tema';
+  const LS_THEME_CSS = 'hazlo.tema.css';
+  const THEME_DEF = { header: '#3FD6B0', buttons: '#4A86E8', page: '#FFFFFF', radius: 20, font: 'redondeada' };
+  const THEME_KEYS = ['--band-1', '--band-2', '--brand', '--page-accent', '--cta-1', '--cta-2', '--on-cta', '--cta-edge',
+    '--page', '--surface-2', '--r', '--font-display', '--font-body'];
+  const FONT_SETS = {
+    redondeada: null,   // la de siempre: Fredoka en títulos y Nunito en el texto
+    suave: '"Nunito", ui-rounded, "SF Pro Rounded", system-ui, sans-serif',
+    clasica: 'Georgia, "Iowan Old Style", "Times New Roman", serif',
+    maquina: '"American Typewriter", "Courier New", Courier, monospace',
+  };
+  const PRESETS = [['Menta', '#3FD6B0'], ['Lila', '#8A5CF6'], ['Naranja', '#FF8A3D'], ['Rosa', '#E8507A'],
+    ['Azul', '#4A86E8'], ['Verde', '#2C9445'], ['Carbón', '#1D2C30'], ['Blanco', '#FFFFFF']];
+  const NOTES = {
+    header: 'El encabezado usa un tono suave de este color, para que el texto se lea bien.',
+    buttons: 'Los botones usan este color tal cual. Si es muy claro, su texto se pone oscuro.',
+    page: 'El fondo usa un tono muy suave de este color, para que todo se lea bien.',
+  };
+
+  // Colores
+  const HEX_RE = /^#[0-9a-f]{6}$/i;
+  const WHITE = [255, 255, 255], INK = [29, 44, 48], MUTED = [90, 110, 114];
+  const hexToRgb = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const rgbToHex = c => '#' + c.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('').toUpperCase();
+  const mixRgb = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+  function lum(c) {
+    const f = v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]);
+  }
+  const contrast = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
+  function rgbToHsl(c) {
+    const [r, g, b] = c.map(v => v / 255), max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+    if (!d) return [0, 0, l];
+    let h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    h *= 60; if (h < 0) h += 360;
+    return [h, d / (1 - Math.abs(2 * l - 1)), l];
+  }
+  function hslToRgb(h, s, l) {
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), m = l - c / 2;
+    const [r, g, b] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    return [(r + m) * 255, (g + m) * 255, (b + m) * 255];
+  }
+  // Encabezado: un degradado suave del color y letras del mismo tono, bien oscuras.
+  function headerVars(hex) {
+    const c = hexToRgb(hex), [h, s] = rgbToHsl(c), sat = s < 0.08 ? 0 : Math.min(0.6, Math.max(0.35, s));
+    let t = 0.61, b2 = mixRgb(c, WHITE, t), l = 0.3, ink = hslToRgb(h, sat, l);
+    while (contrast(ink, b2) < 4.7 && l > 0.1) { l -= 0.02; ink = hslToRgb(h, sat, l); }
+    while (contrast(ink, b2) < 4.7 && t < 0.9) { t += 0.03; b2 = mixRgb(c, WHITE, t); }
+    const b1 = mixRgb(c, WHITE, Math.min(0.95, Math.max(0.84, t + 0.2)));
+    return { '--band-1': rgbToHex(b1), '--band-2': rgbToHex(b2), '--brand': rgbToHex(ink), '--page-accent': rgbToHex(ink) };
+  }
+  // Botones: el color tal cual, con un tono más oscuro abajo; letra blanca u oscura según se lea mejor.
+  function buttonVars(hex) {
+    const c = hexToRgb(hex), [h, s, l] = rgbToHsl(c);
+    const c2 = hslToRgb(h, s * 0.85, Math.max(0, l - 0.09));
+    const mid = mixRgb(c, c2, 0.5);
+    return { '--cta-1': rgbToHex(c), '--cta-2': rgbToHex(c2), '--on-cta': contrast(WHITE, mid) >= 3 ? '#FFFFFF' : '#1D2C30' };
+  }
+  // Fondo: un tono muy suave, siempre lo bastante claro para leer el texto gris.
+  function pageVars(hex) {
+    const c = hexToRgb(hex);
+    let t = 0.88, p = mixRgb(c, WHITE, t);
+    while (contrast(MUTED, p) < 4.5 && t < 0.97) { t += 0.01; p = mixRgb(c, WHITE, t); }
+    return { '--page': rgbToHex(p), '--surface-2': rgbToHex(mixRgb(p, INK, 0.07)) };
+  }
+  function themeVars(th) {
+    const v = {};
+    if (th.header) Object.assign(v, headerVars(th.header));
+    if (th.buttons) Object.assign(v, buttonVars(th.buttons));
+    if (th.page) Object.assign(v, pageVars(th.page));
+    if (Number.isFinite(th.radius) && th.radius !== THEME_DEF.radius) v['--r'] = th.radius + 'px';
+    const f = FONT_SETS[th.font];
+    if (f) { v['--font-display'] = f; v['--font-body'] = f; }
+    // Si los botones casi se confunden con el fondo, llevan un borde fino.
+    const mid = mixRgb(hexToRgb(v['--cta-1'] || '#4A86E8'), hexToRgb(v['--cta-2'] || '#2F66D6'), 0.5);
+    if (contrast(mid, hexToRgb(v['--page'] || '#FFFFFF')) < 1.4) v['--cta-edge'] = 'rgba(29, 44, 48, .22)';
+    return v;
+  }
+  function readTheme() {
+    let t = null;
+    try { t = JSON.parse(lsGet(LS_THEME)); } catch (e) { t = null; }
+    const out = {};
+    if (!t || typeof t !== 'object') return out;
+    for (const k of ['header', 'buttons', 'page']) if (HEX_RE.test(t[k]) && t[k].toUpperCase() !== THEME_DEF[k]) out[k] = t[k].toUpperCase();
+    if (Number.isFinite(t.radius) && t.radius !== THEME_DEF.radius) out.radius = Math.max(0, Math.min(28, Math.round(t.radius)));
+    if (FONT_SETS[t.font]) out.font = t.font;
+    return out;
+  }
+
+  let theme = readTheme();
+  let themeCss = {};
+  let fontShown = theme.font || 'redondeada';
+  let themeSaveTimer = 0;
+  function saveTheme() {
+    clearTimeout(themeSaveTimer); themeSaveTimer = 0;
+    lsSet(LS_THEME, JSON.stringify(theme));
+    lsSet(LS_THEME_CSS, JSON.stringify(themeCss));
+  }
+  function applyTheme(save) {
+    themeCss = themeVars(theme);
+    const st = document.documentElement.style;
+    for (const k of THEME_KEYS) { if (themeCss[k] === undefined) st.removeProperty(k); else st.setProperty(k, themeCss[k]); }
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', themeCss['--band-1'] || '#D9FCF3');
+    const f = theme.font || 'redondeada';
+    if (f !== fontShown) { fontShown = f; requestAnimationFrame(redrawStrikes); }   // la letra nueva mueve las líneas del tachado
+    if (save) { clearTimeout(themeSaveTimer); themeSaveTimer = setTimeout(saveTheme, 250); }
+  }
+  let themeRaf = 0;
+  const applySoon = () => { if (!themeRaf) themeRaf = requestAnimationFrame(() => { themeRaf = 0; applyTheme(true); }); };
+  if (Object.keys(theme).length) applyTheme(true);   // recalcula con la versión actual y refresca lo guardado
+  document.addEventListener('visibilitychange', () => { if (document.hidden && themeSaveTimer) saveTheme(); });
+
+  // Panel
+  const pz = $('#perso'), pzName = $('#pz-nombre'), pzHex = $('#pz-hex'), pzSw = $('#pz-swatch');
+  const pzR = $('#pz-r'), pzG = $('#pz-g'), pzB = $('#pz-b'), pzRadius = $('#pz-radio'), pzPresets = $('#pz-presets');
+  let pzTarget = 'header';
+  const curColor = () => theme[pzTarget] || THEME_DEF[pzTarget];
+  for (const [name, hex] of PRESETS) {
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'pz-dot'; b.dataset.hex = hex; b.style.background = hex;
+    b.setAttribute('aria-label', name); b.setAttribute('aria-pressed', 'false');
+    pzPresets.appendChild(b);
+  }
+  function syncMixer() {
+    const hex = curColor(), c = hexToRgb(hex), [r, g, b] = c;
+    pzR.value = r; pzG.value = g; pzB.value = b;
+    $('#pz-rv').textContent = r; $('#pz-gv').textContent = g; $('#pz-bv').textContent = b;
+    if (document.activeElement !== pzHex) pzHex.value = hex;
+    pzSw.style.background = hex;
+    pzSw.style.color = contrast(WHITE, c) >= 2.2 ? '#FFFFFF' : '#1D2C30';
+    // Cada barra muestra hacia dónde cambia el color si la mueves.
+    const track = (a, z) => 'linear-gradient(90deg, ' + rgbToHex(a) + ', ' + rgbToHex(z) + ')';
+    pzR.style.setProperty('--track', track([0, g, b], [255, g, b]));
+    pzG.style.setProperty('--track', track([r, 0, b], [r, 255, b]));
+    pzB.style.setProperty('--track', track([r, g, 0], [r, g, 255]));
+    for (const d of pzPresets.children) d.setAttribute('aria-pressed', String(d.dataset.hex === hex));
+    for (const t of pz.querySelectorAll('[data-target]')) t.setAttribute('aria-checked', String(t.dataset.target === pzTarget));
+    $('#pz-nota').textContent = NOTES[pzTarget];
+  }
+  function syncRadius() {
+    const r = Number.isFinite(theme.radius) ? theme.radius : THEME_DEF.radius;
+    pzRadius.value = r;
+    $('#pz-radio-v').textContent = r + ' px';
+    for (const b of pz.querySelectorAll('[data-r]')) b.setAttribute('aria-pressed', String(+b.dataset.r === r));
+  }
+  function syncFonts() {
+    const f = theme.font || 'redondeada';
+    for (const b of pz.querySelectorAll('[data-font]')) b.setAttribute('aria-checked', String(b.dataset.font === f));
+  }
+  const syncPerso = () => { syncMixer(); syncRadius(); syncFonts(); };
+  function setColor(hex) {
+    hex = hex.toUpperCase();
+    if (hex === THEME_DEF[pzTarget]) delete theme[pzTarget]; else theme[pzTarget] = hex;
+    applySoon(); syncMixer();
+  }
+  function setRadius(r) {
+    if (r === THEME_DEF.radius) delete theme.radius; else theme.radius = r;
+    applySoon(); syncRadius();
+  }
+  for (const el of [pzR, pzG, pzB]) el.addEventListener('input', () => setColor(rgbToHex([+pzR.value, +pzG.value, +pzB.value])));
+  pzHex.addEventListener('input', () => {
+    let v = pzHex.value.trim();
+    if (v && v[0] !== '#') v = '#' + v;
+    if (HEX_RE.test(v)) setColor(v);
+  });
+  pzHex.addEventListener('blur', () => { pzHex.value = curColor(); });
+  pzHex.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pzHex.blur(); } });
+  pzPresets.addEventListener('click', e => { const d = e.target.closest('.pz-dot'); if (d) setColor(d.dataset.hex); });
+  for (const t of pz.querySelectorAll('[data-target]')) t.addEventListener('click', () => { pzTarget = t.dataset.target; syncMixer(); });
+  pzRadius.addEventListener('input', () => setRadius(+pzRadius.value));
+  for (const b of pz.querySelectorAll('[data-r]')) b.addEventListener('click', () => setRadius(+b.dataset.r));
+  for (const b of pz.querySelectorAll('[data-font]')) b.addEventListener('click', () => {
+    if (b.dataset.font === 'redondeada') delete theme.font; else theme.font = b.dataset.font;
+    applySoon(); syncFonts();
+  });
+  pzName.addEventListener('input', () => {
+    lsSet(LS_NAME, pzName.value.replace(/\s+/g, ' ').trim().slice(0, 24));
+    lsSet(LS_NAME_ASKED, '1');
+    showName();
+  });
+  pzName.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); pzName.blur(); } });
+
+  function openPerso() {
+    if (!nameBox.hidden) closeName();
+    togglePanel(false);
+    pzName.value = lsGet(LS_NAME) || '';
+    syncPerso();
+    pz.hidden = false;
+    document.body.classList.add('perso-on');   // el botón flotante no tapa los controles
+    holaBtn.setAttribute('aria-expanded', 'true');
+    pz.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
+  }
+  function closePerso() {
+    if (pz.hidden) return;
+    pz.hidden = true;
+    document.body.classList.remove('perso-on');
+    holaBtn.setAttribute('aria-expanded', 'false');
+    if (themeSaveTimer) saveTheme();
+  }
+  holaBtn.addEventListener('click', () => { if (pz.hidden) openPerso(); else closePerso(); });
+  $('#pz-abrir').addEventListener('click', () => { openPerso(); if (!reduced()) window.scrollTo({ top: 0, behavior: 'smooth' }); else window.scrollTo(0, 0); });
+  $('#perso-cerrar').addEventListener('click', closePerso);
+  $('#pz-ok').addEventListener('click', closePerso);
+  pz.addEventListener('keydown', e => { if (e.key === 'Escape') { e.preventDefault(); closePerso(); holaBtn.focus(); } });
+  $('#pz-reset').addEventListener('click', () => {
+    if (!Object.keys(theme).length) { toast('Ya tienes el diseño original.'); return; }
+    const prev = Object.assign({}, theme);
+    theme = {}; applyTheme(true); syncPerso();
+    toast('Volviste al diseño original.', 'Deshacer', () => { theme = prev; applyTheme(true); syncPerso(); });
+  });
 
   /* ---------- Arranque ---------- */
 

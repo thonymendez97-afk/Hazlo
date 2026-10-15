@@ -6,6 +6,16 @@
 <title>¡Hazlo!</title>
 <meta name="description" content="Tus tareas del día, tachables, con colores y gestos.">
 <meta name="theme-color" content="#D9FCF3">
+<script>
+  // Aplica tu diseño guardado (Personalizar) antes de pintar la pantalla, para que no parpadee.
+  try {
+    var v = JSON.parse(localStorage.getItem('hazlo.tema.css') || 'null');
+    if (v && typeof v === 'object') {
+      for (var k in v) if (/^--[a-z0-9-]+$/.test(k) && typeof v[k] === 'string') document.documentElement.style.setProperty(k, v[k]);
+      if (v['--band-1']) document.querySelector('meta[name="theme-color"]').setAttribute('content', v['--band-1']);
+    }
+  } catch (e) { /* sin diseño guardado */ }
+</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -28,6 +38,7 @@
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M9 2.5h6a1 1 0 0 1 .8 1.6L14.5 6v4.2l2.9 2.6a.8.8 0 0 1-.5 1.4H13v6.3L12 22l-1-1.5v-6.3H7.1a.8.8 0 0 1-.5-1.4l2.9-2.6V6L8.2 4.1A1 1 0 0 1 9 2.5z"/></symbol>
   <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.6 2H4.4L6 16.5zM10 20.6a2.2 2.2 0 0 0 4 0"/></symbol>
   <symbol id="i-alarm" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.8M4.5 5.5l3-2.5M19.5 5.5l-3-2.5"/></symbol>
+  <symbol id="i-brush" viewBox="0 0 24 24"><path d="M20 4.5c-3.6 1.6-7.4 5.2-9.6 8.6l1.5 1.5c3.4-2.2 7-6 8.6-9.6a.4.4 0 0 0-.5-.5zM9.6 13.9c-2.2-.1-3.6 1.4-3.6 3.4 0 1.2-.7 2-1.8 2.3 1 .9 2.4 1.3 3.8 1.2 2.6-.2 3.9-2.2 3.4-4.6"/></symbol>
   <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5L18 18M6 18l2.5-2.5M15.5 8.5L18 6"/></symbol>
 </svg>
 
@@ -41,7 +52,7 @@
       </svg>
       <div>
         <h1>¡Hazlo!</h1>
-        <button class="hola" id="hola" type="button" aria-label="Cambiar tu nombre">Tareas diarias</button>
+        <button class="hola" id="hola" type="button" aria-label="Personalizar la app" aria-expanded="false" aria-controls="perso">Tareas diarias</button>
       </div>
     </div>
     <button class="bell" id="bell" type="button" aria-label="Alertas" aria-expanded="false" aria-controls="alertas">
@@ -67,6 +78,65 @@
     </form>
     <button class="nb-skip" id="nombre-saltar" type="button">Ahora no</button>
   </section>
+  <section class="perso" id="perso" hidden aria-labelledby="perso-t">
+    <div class="pz-head">
+      <h2 id="perso-t"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg>Personalizar</h2>
+      <button class="al-close" id="perso-cerrar" type="button" aria-label="Cerrar personalizar"><svg class="ic" aria-hidden="true"><use href="#i-x"/></svg></button>
+    </div>
+    <p class="pz-sub">Haz la app a tu gusto. Los cambios se ven al instante y se guardan en este teléfono.</p>
+
+    <div class="pz-sec">
+      <label class="pz-lbl" for="pz-nombre">Tu nombre</label>
+      <input class="pz-name" id="pz-nombre" type="text" maxlength="24" placeholder="Tu nombre" autocomplete="off" autocapitalize="words" enterkeyhint="done">
+    </div>
+
+    <div class="pz-sec">
+      <div class="pz-lbl"><span>Color</span><input class="pz-hex" id="pz-hex" type="text" maxlength="7" spellcheck="false" autocomplete="off" autocapitalize="characters" enterkeyhint="done" aria-label="Código del color"></div>
+      <div class="pz-targets" role="radiogroup" aria-label="Qué parte pintar">
+        <button type="button" role="radio" aria-checked="true" data-target="header">Encabezado</button>
+        <button type="button" role="radio" aria-checked="false" data-target="buttons">Botones</button>
+        <button type="button" role="radio" aria-checked="false" data-target="page">Fondo</button>
+      </div>
+      <div class="pz-mixer">
+        <div class="pz-swatch" id="pz-swatch" aria-hidden="true">RGB</div>
+        <div class="pz-sliders">
+          <label class="pz-sl pz-sl-r"><span>R</span><input class="pz-range" id="pz-r" type="range" min="0" max="255" step="1" aria-label="Rojo"><output id="pz-rv">0</output></label>
+          <label class="pz-sl pz-sl-g"><span>G</span><input class="pz-range" id="pz-g" type="range" min="0" max="255" step="1" aria-label="Verde"><output id="pz-gv">0</output></label>
+          <label class="pz-sl pz-sl-b"><span>B</span><input class="pz-range" id="pz-b" type="range" min="0" max="255" step="1" aria-label="Azul"><output id="pz-bv">0</output></label>
+        </div>
+      </div>
+      <div class="pz-presets" id="pz-presets" role="group" aria-label="Colores listos"></div>
+      <p class="pz-note" id="pz-nota"></p>
+    </div>
+
+    <div class="pz-sec">
+      <div class="pz-lbl"><label for="pz-radio">Bordes</label><b id="pz-radio-v">20 px</b></div>
+      <div class="pz-radius">
+        <input class="pz-range" id="pz-radio" type="range" min="0" max="28" step="1">
+        <div class="pz-rprev" role="group" aria-label="Bordes listos">
+          <button type="button" data-r="4" aria-label="Rectos" style="border-radius:3px"></button>
+          <button type="button" data-r="12" aria-label="Medios" style="border-radius:8px"></button>
+          <button type="button" data-r="20" aria-label="Redondos" style="border-radius:14px"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pz-sec">
+      <div class="pz-lbl">Tipo de letra</div>
+      <div class="pz-fonts" role="radiogroup" aria-label="Tipo de letra">
+        <button type="button" role="radio" aria-checked="true" data-font="redondeada" style="font-family:Fredoka,Nunito,sans-serif;font-weight:600">¡Hazlo!<small>Redondeada</small></button>
+        <button type="button" role="radio" aria-checked="false" data-font="suave" style="font-family:Nunito,sans-serif;font-weight:800">¡Hazlo!<small>Suave</small></button>
+        <button type="button" role="radio" aria-checked="false" data-font="clasica" style="font-family:Georgia,'Times New Roman',serif;font-weight:700">¡Hazlo!<small>Clásica</small></button>
+        <button type="button" role="radio" aria-checked="false" data-font="maquina" style="font-family:'American Typewriter','Courier New',Courier,monospace;font-weight:700">¡Hazlo!<small>Máquina</small></button>
+      </div>
+    </div>
+
+    <div class="pz-actions">
+      <button type="button" class="pz-reset" id="pz-reset">Restablecer</button>
+      <button type="button" class="pz-ok" id="pz-ok">Listo</button>
+    </div>
+  </section>
+
   <section class="alerts" id="alertas" hidden aria-labelledby="alertas-t">
     <div class="al-head">
       <h2 id="alertas-t"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg>Alertas</h2>
@@ -125,6 +195,7 @@
     <p class="note" id="nota-gestos" hidden>Mantén presionada una tarea para moverla. Deslízala a la derecha para fijarla arriba, o a la izquierda para borrarla si ya está tachada.</p>
     <p class="note" id="nota-diaria" hidden>Las tareas diarias vuelven a quedar pendientes al día siguiente.</p>
     <p class="note" id="nota-modo" hidden></p>
+    <button class="pz-link" id="pz-abrir" type="button"><svg class="ic" aria-hidden="true"><use href="#i-brush"/></svg>Personalizar la app</button>
   </footer>
 </main>
 
